@@ -19,6 +19,7 @@
             @endforeach
         </select>
 
+        
         <label for="priority">Priority</label>
 
         <select id="priority" name="priority" class="border p-2 mr-4">
@@ -39,7 +40,6 @@
             Reset
         </a>
     </form>
-
     <table class="w-full border-collapse">
         <thead>
             <tr class="border">

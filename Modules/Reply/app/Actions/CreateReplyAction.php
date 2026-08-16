@@ -27,13 +27,8 @@ class CreateReplyAction
                 'status' => 'in_progress',
             ]);
         }
-
         $reply->load('user');
-
-        
         rescue(fn () => event(new ReplyCreated($reply)));
-
-        
         return [
             'reply' => $reply,
             'ticket_status' => $ticket->fresh()->status,

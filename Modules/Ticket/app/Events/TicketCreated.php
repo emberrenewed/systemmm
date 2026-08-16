@@ -30,6 +30,7 @@ class TicketCreated implements ShouldBroadcastNow
         return 'ticket.created';
     }
 
+    
     public function broadcastWith(): array
     {
         return [

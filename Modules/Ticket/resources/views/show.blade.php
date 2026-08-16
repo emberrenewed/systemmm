@@ -11,9 +11,9 @@
         · Status:
         <strong>{{ $ticket->status ?: 'not set' }}</strong>
     </p>
-
+    
     <p class="mt-4">{{ $ticket->description }}</p>
-
+    
     <hr class="my-6">
 
     <h2 class="text-xl font-bold">Update ticket</h2>
@@ -21,7 +21,7 @@
     <form method="POST" action="{{ route('tickets.update', $ticket) }}" class="mt-4">
         @csrf
         @method('PATCH')
-
+        
         <label for="status">Status</label>
         <select id="status" name="status" class="border p-2 mr-4">
             <option value="">Not set</option>

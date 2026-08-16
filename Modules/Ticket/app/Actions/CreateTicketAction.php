@@ -16,10 +16,8 @@ class CreateTicketAction
         ]);
 
         $ticket->load('user');
-
-        
-        TicketCreated::dispatch($ticket);
-
+       // TicketCreated::dispatch($ticket);
+        rescue(fn()=>event(new TicketCreated($ticket)));
         return $ticket;
     }
 }

@@ -27,7 +27,7 @@ import echo from '../../echo';
         }
 
         const emptyRow = document.getElementById('tickets-empty-row');
-
+        
         if (emptyRow) {
             emptyRow.remove();
         }
