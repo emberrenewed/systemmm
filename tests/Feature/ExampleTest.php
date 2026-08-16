@@ -8,7 +8,6 @@ class ExampleTest extends TestCase
 {
     public function test_the_health_endpoint_returns_a_successful_response(): void
     {
-        // This is an API-only application, so there is no "/" route to hit.
         $response = $this->get('/up');
 
         $response->assertStatus(200);

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "name": "Teckting API - Basic Test",
-    "description": "Simple Postman collection for beginner testing.\n\nHow to test:\n1. Import this collection + environment\n2. Select environment: Teckting Local\n3. Run Login (User) or Login (Admin) first\n4. Then test Tickets and Replies\n\nRoles:\n- Users create, view and update the status of their own tickets\n- Only admin can set the ticket priority (new tickets are always medium)\n- Only admin can add a reply and delete a reply\n- Only admin can delete a ticket\n\nTest accounts (after seed):\n- Admin: admin@test.com / password\n- User: user@test.com / password\n\nLogin and Register auto-save the token.\n\nAll request bodies use form-data (not raw JSON).\nDo not set a Content-Type header, Postman sets it.",
+    "description": "Ticket conversation API.\n\nFlow:\n1. Login (User) then Login (Admin)\n2. Create Ticket\n3. Add Reply (Admin) — optional image\n4. Add Reply (User) — optional image\n5. Show Ticket to see replies and image_url\n\nImage:\n- Body = form-data (not JSON)\n- Key: image\n- Types: jpg, jpeg, png, gif, webp (max 4MB)\n- Click Select Files on the image field\n- Run: php artisan storage:link\n\nAccounts (php artisan migrate:fresh --seed):\n- User: user@test.com / password\n- Admin: admin@test.com / password\n\nbase_url: http://127.0.0.1:8000/api\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,6 +12,14 @@
     },
     {
       "key": "token",
+      "value": ""
+    },
+    {
+      "key": "user_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
       "value": ""
     },
     {
@@ -49,7 +57,8 @@
                   "    var json = pm.response.json();",
                   "    if (json.token) {",
                   "        pm.collectionVariables.set('token', json.token);",
-                  "        console.log('Token saved');",
+                  "        pm.collectionVariables.set('user_token', json.token);",
+                  "        console.log('Token saved as user_token');",
                   "    }",
                   "}"
                 ]
@@ -101,7 +110,7 @@
                 "register"
               ]
             },
-            "description": "Create a new user.\nNo token needed.\nToken is saved automatically after success."
+            "description": "Create a new user.\nNo token needed.\nToken is saved as user_token."
           },
           "response": []
         },
@@ -117,7 +126,8 @@
                   "    var json = pm.response.json();",
                   "    if (json.token) {",
                   "        pm.collectionVariables.set('token', json.token);",
-                  "        console.log('User token saved');",
+                  "        pm.collectionVariables.set('user_token', json.token);",
+                  "        console.log('user_token saved');",
                   "    }",
                   "}"
                 ]
@@ -159,7 +169,7 @@
                 "login"
               ]
             },
-            "description": "Login as normal user.\nEmail: user@test.com\nPassword: password\nBody is form-data.\nToken is saved automatically."
+            "description": "Login as normal user.\nEmail: user@test.com\nPassword: password\nSaves user_token (kept separate from admin_token)."
           },
           "response": []
         },
@@ -175,7 +185,8 @@
                   "    var json = pm.response.json();",
                   "    if (json.token) {",
                   "        pm.collectionVariables.set('token', json.token);",
-                  "        console.log('Admin token saved');",
+                  "        pm.collectionVariables.set('admin_token', json.token);",
+                  "        console.log('admin_token saved');",
                   "    }",
                   "}"
                 ]
@@ -217,7 +228,7 @@
                 "login"
               ]
             },
-            "description": "Login as admin.\nEmail: admin@test.com\nPassword: password\nToken is saved automatically.\nUse this for delete ticket / add reply / delete reply."
+            "description": "Login as admin.\nEmail: admin@test.com\nPassword: password\nSaves admin_token (kept separate from user_token).\nRun this once, then you do not need to login again before admin replies."
           },
           "response": []
         },
@@ -240,7 +251,7 @@
                 "logout"
               ]
             },
-            "description": "Logout current user.\nNeeds token (Bearer)."
+            "description": "Logout the current {{token}}.\nNeeds a Bearer token."
           },
           "response": []
         }
@@ -267,7 +278,7 @@
                   "            console.log('ticket_id=' + t.id + ' | user_id=' + t.user_id + ' | ' + t.status + ' | ' + t.subject);",
                   "        });",
                   "    } else {",
-                  "        console.log('No tickets found. Run: php artisan migrate:fresh --seed');",
+                  "        console.log('No tickets. Run Create Ticket, or: php artisan migrate:fresh --seed');",
                   "    }",
                   "}"
                 ]
@@ -291,7 +302,7 @@
                 "tickets"
               ]
             },
-            "description": "Get all tickets.\nUser sees only own tickets.\nAdmin sees all tickets.\nNeeds token."
+            "description": "Get tickets for the current {{token}}.\nUser sees only own tickets.\nAdmin sees all tickets."
           },
           "response": []
         },
@@ -326,7 +337,7 @@
                 }
               ]
             },
-            "description": "Get tickets with filter.\nstatus and priority are optional.\nNeeds token."
+            "description": "Filter tickets.\nstatus and priority are optional.\nNeeds token."
           },
           "response": []
         },
@@ -344,12 +355,31 @@
                   "        pm.collectionVariables.set('ticket_id', String(json.data.id));",
                   "        console.log('ticket_id saved: ' + json.data.id);",
                   "    }",
-                  "}"
+                  "    pm.test('new ticket has empty status', function () {",
+                  "        pm.expect(json.data.status).to.equal(null);",
+                  "    });",
+                  "    pm.test('new ticket has empty priority', function () {",
+                  "        pm.expect(json.data.priority).to.equal(null);",
+                  "    });",
+                  "}",
+                  "pm.test('ticket created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -381,12 +411,31 @@
                 "tickets"
               ]
             },
-            "description": "Create a new ticket.\nYou cannot send priority. Every new ticket starts as medium.\nOnly an admin can change the priority later.\nSaves ticket_id automatically.\nNeeds token."
+            "description": "USER creates a ticket.\nUses {{user_token}} — run Login (User) first.\nSend only subject and description.\nstatus and priority start as null.\nSaves ticket_id automatically."
           },
           "response": []
         },
         {
           "name": "Show Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    var replies = (json.data && json.data.replies) ? json.data.replies : [];",
+                  "    console.log('ticket_id=' + json.data.id + ' replies=' + replies.length);",
+                  "    replies.forEach(function (r) {",
+                  "        var who = (r.user && r.user.is_admin) ? 'ADMIN' : 'USER';",
+                  "        console.log('reply #' + r.id + ' [' + who + '] image_url=' + (r.image_url || '(none)') + ' | ' + r.message);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -406,13 +455,23 @@
               ],
               "variable": []
             },
-            "description": "Show one ticket with replies.\nUses {{ticket_id}}.\nNeeds token."
+            "description": "Show one ticket with all replies.\nEach reply includes image and image_url when an image was uploaded.\nOpen image_url in a browser (needs php artisan storage:link).\nUses {{ticket_id}}."
           },
           "response": []
         },
         {
-          "name": "Update Ticket Status",
+          "name": "Set Ticket Status (Admin only)",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -446,13 +505,23 @@
               ],
               "variable": []
             },
-            "description": "Update the ticket status.\nAllowed: open, in_progress, resolved, closed.\nA user can update their own ticket, an admin can update any ticket.\nBody is form-data, so method is POST with _method=PATCH (Laravel method spoofing).\nNeeds token."
+            "description": "Set ticket status. Admin only.\nUses {{admin_token}}.\nAllowed: open, in_progress, resolved, closed.\nEmpty value clears it.\nform-data + _method=PATCH."
           },
           "response": []
         },
         {
           "name": "Set Ticket Priority (Admin only)",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -486,13 +555,204 @@
               ],
               "variable": []
             },
-            "description": "Set the ticket priority. Admin only.\nAllowed: low, medium, high.\nIf a normal user sends priority it is ignored and nothing changes.\nYou can also send status in the same request.\nBody is form-data, so method is POST with _method=PATCH (Laravel method spoofing).\nNeeds an ADMIN token - run Login (Admin) first."
+            "description": "Set ticket priority. Admin only.\nUses {{admin_token}}.\nAllowed: low, medium, high.\nform-data + _method=PATCH."
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Status & Priority (Admin only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "priority",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "{{ticket_id}}"
+              ],
+              "variable": []
+            },
+            "description": "Clear status and priority (null).\nAdmin only. Uses {{admin_token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Status as User (403 expected)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('user is blocked with 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "closed",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "{{ticket_id}}"
+              ],
+              "variable": []
+            },
+            "description": "User cannot change ticket status.\nExpected: 403.\nUses {{user_token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "Close Ticket (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ticket closed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PATCH",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "closed",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "{{ticket_id}}"
+              ],
+              "variable": []
+            },
+            "description": "Close the ticket. Admin only.\nAfter this, nobody can add replies (403).\nUses {{admin_token}}."
           },
           "response": []
         },
         {
           "name": "Delete Ticket (Admin only)",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [
               {
@@ -511,7 +771,7 @@
               ],
               "variable": []
             },
-            "description": "Delete a ticket.\nAdmin only.\nLogin as Admin first.\nNeeds token."
+            "description": "Delete a ticket. Admin only.\nUses {{admin_token}}."
           },
           "response": []
         }
@@ -519,9 +779,10 @@
     },
     {
       "name": "3. Replies",
+      "description": "Admin replies (optional image), then user replies (optional image).\nBody = form-data. Click Select Files on image if you want to attach a photo.",
       "item": [
         {
-          "name": "Add Reply (Admin only)",
+          "name": "Add Reply (Admin)",
           "event": [
             {
               "listen": "test",
@@ -533,13 +794,29 @@
                   "    if (json.data && json.data.id) {",
                   "        pm.collectionVariables.set('reply_id', String(json.data.id));",
                   "        console.log('reply_id saved: ' + json.data.id);",
+                  "        if (json.data.image_url) {",
+                  "            console.log('image_url: ' + json.data.image_url);",
+                  "        }",
                   "    }",
-                  "}"
+                  "}",
+                  "pm.test('admin reply created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -552,8 +829,14 @@
               "formdata": [
                 {
                   "key": "message",
-                  "value": "We are looking into your issue and will update you soon.",
+                  "value": "Thanks, we are looking into this.",
                   "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Optional. Click Select Files and pick a jpg/png/gif/webp (max 4MB)."
                 }
               ]
             },
@@ -568,13 +851,97 @@
                 "replies"
               ]
             },
-            "description": "Add reply to a ticket.\nAdmin only.\nLogin as Admin first.\nNormal users get 403, even on their own ticket.\nIf ticket status is open, it becomes in_progress.\nSaves reply_id automatically.\nNeeds token."
+            "description": "Admin reply. Optional image: form-data key image.\nUses {{admin_token}}. Run Login (Admin) first.\nNeeds ticket_id."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Reply (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.id) {",
+                  "        pm.collectionVariables.set('reply_id', String(json.data.id));",
+                  "        console.log('reply_id saved: ' + json.data.id);",
+                  "        if (json.data.image_url) {",
+                  "            console.log('image_url: ' + json.data.image_url);",
+                  "        }",
+                  "    }",
+                  "}",
+                  "pm.test('user reply created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "message",
+                  "value": "Here is more information about my issue.",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Optional. Click Select Files and pick a jpg/png/gif/webp (max 4MB)."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}/replies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "{{ticket_id}}",
+                "replies"
+              ]
+            },
+            "description": "User reply after admin has already replied. Optional image: form-data key image.\nUses {{user_token}}. Run Login (User) and Add Reply (Admin) first.\nNeeds ticket_id."
           },
           "response": []
         },
         {
           "name": "Delete Reply (Admin only)",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [
               {
@@ -592,7 +959,7 @@
                 "{{reply_id}}"
               ]
             },
-            "description": "Delete a reply.\nAdmin only.\nLogin as Admin first.\nNeeds token."
+            "description": "Delete a reply. Admin only.\nUses {{admin_token}} and {{reply_id}} (saved from the last successful reply)."
           },
           "response": []
         }

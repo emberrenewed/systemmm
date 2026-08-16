@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\PersonalAccessToken;
+use Modules\Auth\Models\User;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -53,9 +53,6 @@ class AuthTest extends TestCase
 
     public function test_logout_does_not_error_without_a_personal_access_token(): void
     {
-        // Session/SPA authentication yields a TransientToken (and plain guard
-        // usage yields none at all) — neither can be revoked, but logout must
-        // still succeed rather than blow up with a 500.
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
