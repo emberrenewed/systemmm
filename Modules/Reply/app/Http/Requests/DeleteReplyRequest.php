@@ -13,6 +13,6 @@ class DeleteReplyRequest extends FormRequest
 
     protected function failedAuthorization()
     {
-        abort(403, 'تەنها ئادمین دەتوانێت وەڵام رەش بکاتەوە.');
+        abort(403, __('messages.reply_delete_admin_only'));
     }
 }

@@ -21,6 +21,6 @@ class ReplyController extends Controller
     {
         $action->handle($request->user(), $ticket, $request->validated());
 
-        return back()->with('success', 'Reply sent successfully.');
+        return back()->with('success', __('messages.reply_created'));
     }
 }

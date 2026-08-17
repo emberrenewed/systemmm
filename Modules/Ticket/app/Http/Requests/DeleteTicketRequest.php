@@ -12,7 +12,7 @@ class DeleteTicketRequest extends FormRequest
     }
 
     protected function failedAuthorization()
-    {
-        abort(403, 'تەنها ئادمین دەتوانێت تیکێت رەش بکاتەوە.');
+    {   
+        abort(403, __('messages.ticket_failed_authorization'));
     }
 }

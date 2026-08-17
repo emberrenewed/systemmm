@@ -11,7 +11,7 @@ class EnsureUserIsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user()?->is_admin) {
-            abort(403, 'You are not authorized to access this resource.');
+            abort(403, __('messages.admin_failed_authorization'));
         }
 
         return $next($request);

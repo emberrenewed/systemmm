@@ -31,6 +31,6 @@ class TicketController extends Controller
     {
         $action->handle($ticket, $request->validated());
 
-        return back()->with('success', 'Ticket updated successfully.');
+            return back()->with('success', __('messages.ticket_status_updated'));
     }
 }

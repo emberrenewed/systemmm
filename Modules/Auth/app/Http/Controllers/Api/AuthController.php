@@ -18,7 +18,7 @@ class AuthController extends Controller
         $result = $action->handle($request->validated());
 
         return AuthResource::make($result['user'])->additional([
-            'message' => 'User registered successfully.',
+            'message' => __('messages.register_success'),
             'token' => $result['token'],
         ])->response()->setStatusCode(201);
     }
@@ -33,7 +33,7 @@ class AuthController extends Controller
         }
 
         return AuthResource::make($result['user'])->additional([
-            'message' => 'Login successful.',
+            'message' => __('messages.login_success'),
             'token' => $result['token'],
         ]);
     }
@@ -43,7 +43,7 @@ class AuthController extends Controller
         $action->handle($request->user());
 
         return response()->json([
-            'message' => 'Logged out successfully.',
+            'message' => __('messages.logout_success'),
         ]);
     }
 }

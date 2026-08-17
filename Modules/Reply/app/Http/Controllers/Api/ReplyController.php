@@ -17,7 +17,7 @@ class ReplyController extends Controller
     {
         $result = $action->handle($request->user(), $ticket, $request->validated());
 
-        return ReplyResource::make($result['reply'])->additional(['message' => 'Reply added successfully.',
+        return ReplyResource::make($result['reply'])->additional(['message' => (__('messages.reply_created')),'',
             'ticket_status' => $result['ticket_status'], ])->response()->setStatusCode(201);
     }
 
@@ -25,6 +25,6 @@ class ReplyController extends Controller
     {
         $action->handle($reply);
 
-        return response()->json(['message' => 'Reply deleted successfully.']);
+        return response()->json(['message' => (__('messages.reply_deleted'))]);
     }
 }

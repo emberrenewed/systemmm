@@ -16,6 +16,7 @@ class ShowTicketRequest extends FormRequest
 
     protected function failedAuthorization()
     {
-        abort(403, 'تەنها دەتوانیت تیکێتی خۆت ببینیت.');
+
+            abort(403, __('messages.ticket_failed_authorization'));
     }
 }

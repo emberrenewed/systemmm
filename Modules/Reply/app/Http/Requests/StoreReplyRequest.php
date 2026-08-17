@@ -28,6 +28,6 @@ class StoreReplyRequest extends FormRequest
 
     protected function failedAuthorization()
     {
-        abort(403, 'ناتوانیت وەڵام بدەیتەوە. چاوەڕێی وەڵامی ئادمین بکە یان تیکت داخراوە.');
+        abort(403, __('messages.reply_failed_authorization'));
     }
 }

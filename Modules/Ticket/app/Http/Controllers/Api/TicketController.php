@@ -30,7 +30,7 @@ class TicketController extends Controller
     {
         $ticket = $action->handle($request->user(), $request->validated());
 
-        return TicketResource::make($ticket)->additional(['message' => 'Ticket created successfully.'])->response()->setStatusCode(201);
+        return TicketResource::make($ticket)->additional(['message' => (__('messages.ticket_created'))])->response()->setStatusCode(201);
     }
 
     public function show(ShowTicketRequest $request, Ticket $ticket, ShowTicketAction $action)
@@ -44,13 +44,13 @@ class TicketController extends Controller
     {
         $ticket = $action->handle($ticket, $request->validated());
 
-        return TicketResource::make($ticket)->additional(['message' => 'Ticket status updated successfully.']);
+        return TicketResource::make($ticket)->additional(['message' => (__('messages.ticket_status_updated'))])->response()->setStatusCode(200);
     }
 
     public function destroy(DeleteTicketRequest $request, Ticket $ticket, DeleteTicketAction $action)
     {
         $action->handle($ticket);
 
-        return response()->json(['message' => 'Ticket deleted successfully.']);
+        return response()->json(['message' => (__('messages.ticket_deleted'))]);
     }
 }

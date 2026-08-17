@@ -25,7 +25,7 @@ class LoginRequest extends FormRequest
     {
         if (! Auth::attempt($this->validated())) {
             throw ValidationException::withMessages([
-                'email' => 'Check your email and password to correct.',
+                'email' => __('messages.login_failed'),
             ]);
         }
     }

@@ -14,7 +14,7 @@ class LoginUserAction
 
             return [
                 'error' => true,
-                'message' => 'Check your email and password to correct.',
+                'message' => __('messages.login_failed'),
             ];
         }
 
